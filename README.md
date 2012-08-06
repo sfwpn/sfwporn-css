@@ -17,4 +17,9 @@ include correct info.
 
 2. Edit network-css.py and change the subreddits.
 
-3. Run the script under python2.7 every time you want to update the CSS.
+3. Set up your subreddits. Put the delimiters around the CSS you want copied
+in the CSS_SUBREDDIT subreddit, and put them in, empty, in the
+NETWORK_SUBREDDITs. I advise you put the network CSS at the top, that way you
+can use the cascading functionality of CSS to make changes on each subreddit.
+
+4. Run the script under python2.7 every time you want to update the CSS.

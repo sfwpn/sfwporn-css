@@ -1,0 +1,4 @@
+[reddit]
+user_agent = Can be anything, should indicate that it's a bot and include your reddit username
+username = reddit username
+password = reddit password

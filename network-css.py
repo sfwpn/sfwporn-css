@@ -37,7 +37,7 @@ REDDIT_UA = cfg_file.get('reddit', 'user_agent')
 
 # don't change unless you want different delimiter strings for some reason
 START_DELIM = '/* Network-Wide CSS - DO NOT EDIT HERE */'
-END_DELIM = '/* End Network CSS - EDIT BELOW THIS LINE */'
+END_DELIM = '/* End Network CSS - SUBREDDIT-SPECIFIC CSS BELOW THIS LINE */'
 
 
 # log into reddit

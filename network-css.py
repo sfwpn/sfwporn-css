@@ -2,15 +2,13 @@
 # Subreddits to have CSS applied to MUST HAVE the delimiters in the CSS file.
 # With the default delimiters the CSS should include a chunk of text like:
 # 
-# /*
-#   Begin Network CSS - DO NOT EDIT
-# */
+# /* Network-Wide CSS - DO NOT EDIT HERE */
+# 
+# --Network css goes here--
 #
-# /*
-#   End Network CSS - EDIT BELOW THIS LINE
-# */
+# /* End Network CSS - SUBREDDIT-SPECIFIC CSS BELOW THIS LINE */
 #
-# (Subredit-specific CSS goes here.)
+# --Subredit-specific CSS goes here--
 
 
 import re
@@ -27,8 +25,10 @@ cfg_file.read(path_to_cfg)
 
 
 # defines the source and network subreddits
-CSS_SUBREDDIT = 'dakta'
-NETWORK_SUBREDDITS = ['ourhearts']
+CSS_SUBREDDIT = 'sfwpornnetworkcss'
+NETWORK_SUBREDDITS = ['LOLSFWHAPPYFUNTIME']
+# CSS_SUBREDDIT = 'dakta'
+# NETWORK_SUBREDDITS = ['ourhearts']
 
 # login info for the script to log in as, this user must be a mod in the main subreddit
 REDDIT_USERNAME = cfg_file.get('reddit', 'username')
@@ -55,6 +55,7 @@ source_stylesheet = css_subreddit.get_stylesheet()['stylesheet']
 # construct the regex object
 replace_pattern = re.compile('%s.*?%s' % (re.escape(START_DELIM), re.escape(END_DELIM)), re.IGNORECASE|re.DOTALL|re.UNICODE)
 # extract CSS from source stylesheet
+source_css = HTMLParser.HTMLParser().unescape(source_css)
 source_css = re.search(replace_pattern, source_stylesheet).group(0)
 print "  Success!"
 
@@ -66,6 +67,10 @@ for dest_sr in NETWORK_SUBREDDITS:
     
     dest_subreddit = r.get_subreddit(dest_sr)
     dest_css = dest_subreddit.get_stylesheet()['stylesheet']
+    
+    print dest_css
+
+    dest_css = HTMLParser.HTMLParser().unescape(source_css)
 
 #     new_css = re.sub(replace_pattern,
 #                      '%s\\n\%s\\n%s' % (START_DELIM, source_css, END_DELIM),
@@ -77,6 +82,7 @@ for dest_sr in NETWORK_SUBREDDITS:
     
     print "    Done!"
 
+print "Finished!"
 
 # update the sidebar
 # current_sidebar = main_subreddit.get_settings()['description']

@@ -23,3 +23,8 @@ NETWORK_SUBREDDITs. I advise you put the network CSS at the top, that way you
 can use the cascading functionality of CSS to make changes on each subreddit.
 
 4. Run the script under python2.7 every time you want to update the CSS.
+
+# TODO:
+
+- Better format for subreddit configuration than hardcoding (wiki control on source subreddit?)
+- Check for changes in source CSS against cached copy from last run

@@ -12,7 +12,7 @@
 
 
 import re
-import reddit
+import praw
 import HTMLParser
 from ConfigParser import SafeConfigParser
 import sys, os
@@ -52,7 +52,7 @@ tmpdir = './tmp-'+CSS_SUBREDDIT
 def login(username, password, user_agent):
     # log in to reddit
     logging.info("Logging in as /u/"+username+"...")
-    r = reddit.Reddit(user_agent=user_agent)
+    r = praw.Reddit(user_agent=user_agent)
     r.login(username, password)
     logging.info("  Success!")
     return r

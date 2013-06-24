@@ -16,6 +16,13 @@ import reddit
 import HTMLParser
 from ConfigParser import SafeConfigParser
 import sys, os
+import shutil
+import logging
+
+
+import pprint
+
+logging.basicConfig(level=logging.INFO)
 
 # set up the config parser
 cfg_file = SafeConfigParser()
@@ -26,7 +33,7 @@ cfg_file.read(path_to_cfg)
 
 # defines the source and network subreddits
 CSS_SUBREDDIT = 'sfwpornnetworkcss'
-NETWORK_SUBREDDITS = ['LOLSFWHAPPYFUNTIME']
+NETWORK_SUBREDDITS = ['dakta']
 # CSS_SUBREDDIT = 'dakta'
 # NETWORK_SUBREDDITS = ['ourhearts']
 
@@ -40,55 +47,70 @@ START_DELIM = '/* Network-Wide CSS - DO NOT EDIT HERE */'
 END_DELIM = '/* End Network CSS - SUBREDDIT-SPECIFIC CSS BELOW THIS LINE */'
 
 
-# log into reddit
-print "Logging in as /u/"+REDDIT_USERNAME+"..."
-r = reddit.Reddit(user_agent=REDDIT_UA)
-r.login(REDDIT_USERNAME, REDDIT_PASSWORD)
-print "  Success!"
+tmpdir = './tmp-'+CSS_SUBREDDIT
+
+def login(username, password, user_agent):
+    # log in to reddit
+    logging.info("Logging in as /u/"+username+"...")
+    r = reddit.Reddit(user_agent=user_agent)
+    r.login(username, password)
+    logging.info("  Success!")
+    return r
 
 
-# get the source stylesheet
-print "Getting source stylesheet from /r/"+CSS_SUBREDDIT+"..."
-css_subreddit = r.get_subreddit(CSS_SUBREDDIT)
-# fetch the stylesheet from the main subreddit
-source_stylesheet = css_subreddit.get_stylesheet()['stylesheet']
-# construct the regex object
-replace_pattern = re.compile('%s.*?%s' % (re.escape(START_DELIM), re.escape(END_DELIM)), re.IGNORECASE|re.DOTALL|re.UNICODE)
-# extract CSS from source stylesheet
-source_css = HTMLParser.HTMLParser().unescape(source_css)
-source_css = re.search(replace_pattern, source_stylesheet).group(0)
-print "  Success!"
+def get_images(subreddit, directory, PRAW_object):
+    ''' Downloads `subreddit`'s images into `directory`, returns a list of dicts containing
+        all information about those images, and the subreddit's CSS text. Must pass in authenticated PRAW_object.
+    '''
 
-
-# Apply CSS to network subreddits
-print "Updating network subreddits' stylesheets:"
-for dest_sr in NETWORK_SUBREDDITS:
-    print "  /r/"+dest_sr+"..."
+    # get the source stylesheet
+    logging.info("Getting source stylesheet from /r/"+subreddit+"...")
+    css_subreddit = PRAW_object.get_subreddit(subreddit)
+    # fetch the stylesheet from the main subreddit
+    source_style = css_subreddit.get_stylesheet()
+    logging.info("  Success!")
     
-    dest_subreddit = r.get_subreddit(dest_sr)
-    dest_css = dest_subreddit.get_stylesheet()['stylesheet']
+    source_CSS = source_style['stylesheet']
+    source_images = source_style['images']
+
+    # cleanup
+    # needs to happen before, in case it gets cut off by aborted execution
+    if (os.path.isdir(tmpdir)):
+        shutil.rmtree(tmpdir)
     
-    print dest_css
+    # setup
+    os.mkdir(tmpdir)
 
-    dest_css = HTMLParser.HTMLParser().unescape(source_css)
-
-#     new_css = re.sub(replace_pattern,
-#                      '%s\\n\%s\\n%s' % (START_DELIM, source_css, END_DELIM),
-#                      dest_css)
-    new_css = re.sub(replace_pattern, source_css, dest_css)
-    print new_css
+        
+    image_file_map = []
     
-    dest_subreddit.set_stylesheet(new_css)
+    for image in source_images:
+    	# os.system('cd '+tmpdir+'; wget '+image['url']+' -O '+image['name'])
+    	# os.system('cd '+tmpdir+'; url='+image['url']+'; filename=$(basename "$url"); wget "$url"; touch "$filename"; mv $filename '+image['name'])
+    	os.system('cd '+tmpdir+'; wget --quiet '+image['url'])
+    	image_file_map.append({'name': image['name'], 'file': os.path.basename(image['url']), 'type': os.path.basename(image['url'].split('.')[-1])})
+    pprint.pprint(os.listdir(tmpdir))
+    pprint.pprint(image_file_map)
     
-    print "    Done!"
+    return image_file_map, source_CSS
 
-print "Finished!"
+def upload_images(images, directory, subreddit, PRAW_object):
+    ''' Uploads each image from `images` to `subreddit` from `directory`.
+        Must pass authenticated PRAW_object.
+    '''
+    
+    for image in images:
+        PRAW_object.delete_image(subreddit, name=image['name'], header=False)
+        PRAW_object.upload_image(subreddit, directory+'/'+image['file'], name=image['name'], header=False)
+        
 
-# update the sidebar
-# current_sidebar = main_subreddit.get_settings()['description']
-# current_sidebar = HTMLParser.HTMLParser().unescape(current_sidebar)
-# replace_pattern = re.compile('%s.*?%s' % (re.escape(START_DELIM), re.escape(END_DELIM)), re.IGNORECASE|re.DOTALL|re.UNICODE)
-# new_sidebar = re.sub(replace_pattern,
-#                     '%s\\n\\n%s\\n%s' % (START_DELIM, list_text, END_DELIM),
-#                     current_sidebar)
-# main_subreddit.update_settings(description=new_sidebar)
+
+def main():
+    r = login(REDDIT_USERNAME, REDDIT_PASSWORD, REDDIT_UA)
+    images, stylesheet = get_images(CSS_SUBREDDIT, tmpdir, r)
+    for subreddit in NETWORK_SUBREDDITS:
+        upload_images(images, tmpdir, subreddit, r)
+    
+
+if __name__ == '__main__':
+    main()

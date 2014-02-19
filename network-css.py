@@ -13,7 +13,6 @@
 
 import re
 import praw
-import HTMLParser
 from ConfigParser import SafeConfigParser
 import sys, os
 import shutil
@@ -101,7 +100,13 @@ def upload_images(images, directory, subreddit, PRAW_object):
     
     for image in images:
         PRAW_object.delete_image(subreddit, name=image['name'], header=False)
-        PRAW_object.upload_image(subreddit, directory+'/'+image['file'], name=image['name'], header=False)
+        pprint.pprint(subreddit)
+        pprint.pprint(directory)
+        pprint.pprint(directory+'/'+image['file'])
+        pprint.pprint(image['file'])
+        pprint.pprint(str(image['name']))
+        # cast to native string because of a bug in package 'requests': https://github.com/kennethreitz/requests/issues/1252
+        PRAW_object.upload_image(subreddit, str(directory+'/'+image['file']), name=str(image['name']), header=False)
         
 
 
